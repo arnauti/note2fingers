@@ -1,60 +1,203 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet" type="text/css" href="./css/keyboard.css">   
-    </head>
-    <body>
-        <h1>Notas</h1>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/vexflow/build/cjs/vexflow.js"></script>
+    
+    <title>Practicant notes</title>
+</head>
+<body>
+    
+    <canvas id="output" width="1000" height="800" style="margin-top: 50px"></canvas>
+    <div class="note-info"></div>
+    <script>
+
+
+    if (navigator.requestMIDIAccess) {
+        console.log('WebMIDI is supported in this browser.');
+        navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+
+    } else {
+        console.log('WebMIDI is not supported in this browser.');
+        document.querySelector('.note-info').textContent = 'Error: This browser does not support WebMIDI.';
+    }
+
+    function TeacherManager(canvas_id){
+        this.canvas = document.getElementById(canvas_id);
+        this.renderer = new Vex.Flow.Renderer(this.canvas, Vex.Flow.Renderer.Backends.CANVAS);
+        this.ctx = this.renderer.getContext();
+        this.ctx.setFont('Arial', 18);
+        this.ctx.clear();
+        this.topStaff = new Vex.Flow.Stave(20, 0, 500);
+        this.bottomStaff = new Vex.Flow.Stave(20, 150, 500);
+        this.topStaff.addClef('treble');
+        this.bottomStaff.addClef('bass');
+        this.brace = new Vex.Flow.StaveConnector(this.topStaff, this.bottomStaff).setType(3);
+        this.lineLeft = new Vex.Flow.StaveConnector(this.topStaff, this.bottomStaff).setType(1);
+        this.lineRight = new Vex.Flow.StaveConnector(this.topStaff, this.bottomStaff).setType(6);
+
+        this.topStaff.addTimeSignature("4/4");
+        this.bottomStaff.addTimeSignature("4/4");
+        
+        this.topStaff.setContext(this.ctx).draw();
+        this.bottomStaff.setContext(this.ctx).draw();
+        
+        this.brace.setContext(this.ctx).draw();
+        this.lineLeft.setContext(this.ctx).draw();
+        this.lineRight.setContext(this.ctx).draw();
+
         
         
-        <div id="partitura">
-            <div id="nota_play" class="nota">
-                <div class="base">&sung;</div>
-                <div class="sharp">&#9839;</div>
-                <div class="flat">&#9837;</div>
-                <div class="base_int"></div>
-                <div class="base_int2"></div>
-                <div class="name">-</div>
-            </div>
-            <div id="nota_guess" class="nota">
-                <div class="base">&sung;</div>
-                <div class="sharp">&#9839;</div>
-                <div class="flat">&#9837;</div>
-                <div class="base_int"></div>
-                <div class="base_int2"></div>
-                <div class="name">-</div>
-            </div>
-            <div class="rayas">
-                <div class="clave_sol">
-                    &#119070; 
-                </div>
-                <div class="clave_fa">
-                    &#119074;
-                </div>
-                <div class="rayas_clave" style="top: 60px">
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                </div>
-                <div class="rayas_clave" style="top: 90px">
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                    <div class="raya"></div>
-                </div>
-            </div>
+        this.drawNote = function(note){
+            this.voiceTop = new Vex.Flow.Voice({
+            num_beats: 4,
+            beat_value: 4,
+            resolution: Vex.Flow.RESOLUTION
+        });
+
+        this.voiceTop.setStrict(false);
+        
+        this.voiceBottom = new Vex.Flow.Voice({
+            num_beats: 4,
+            beat_value: 4,
+            resolution: Vex.Flow.RESOLUTION
+        });
+        this.voiceBottom.setStrict(false);
+            console.log("draw noteeeee", note);
+            this.notesTop = [
+                // new Vex.Flow.StaveNote({ clef: 'treble', keys: ["d/6"], duration: "q" }),
+                // new Vex.Flow.StaveNote({ clef: 'treble', keys: ["d/5"], duration: "q" }),
+                // new Vex.Flow.StaveNote({ clef: 'treble', keys: ["d/4"], duration: "q" })
+            ];
             
-            <div class="notas">
+            this.notesBottom = [
+                new Vex.Flow.StaveNote({ clef: 'bass', keys: ["d/4"], duration: "q" }),
+                // new Vex.Flow.StaveNote({ clef: 'bass', keys: ["d/3"], duration: "q" }),
+                // new Vex.Flow.StaveNote({ clef: 'bass', keys: ["d/2"], duration: "q" })
+            ];
+            this.voiceTop.addTickables(this.notesTop);
+            this.voiceBottom.addTickables(this.notesBottom);
+            
+            this.formatter = new Vex.Flow.Formatter().
+                joinVoices([this.voiceBottom, this.voiceTop])
+                .format([this.voiceBottom, this.voiceTop], 300);
 
-            </div>
-        </div>
+            this.voiceBottom.draw(this.ctx, this.bottomStaff);
+            this.voiceTop.draw(this.ctx, this.topStaff);
 
-        <div class="note-info">
-            .
-        </div>
-        <script src="./js/keyboard.js"></script>
-    </body>    
+        }
+        this.drawTestNote = function(note){
+            console.log("draw test noteeeee", note);
+        }
+    }
+    
+    var mngr = new  TeacherManager("output");
+
+    // var canvas = document.getElementById("output");
+    // var renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
+    // var ctx = renderer.getContext();
+    // ctx.setFont('Arial', 18);
+
+    // ctx.clear();
+    // var topStaff = new Vex.Flow.Stave(20, 0, 500);
+    // var bottomStaff = new Vex.Flow.Stave(20, 150, 500);
+    // topStaff.addClef('treble');
+    // bottomStaff.addClef('bass');
+    // var brace = new Vex.Flow.StaveConnector(topStaff, bottomStaff).setType(3);
+    // var lineLeft = new Vex.Flow.StaveConnector(topStaff, bottomStaff).setType(1);
+    // var lineRight = new Vex.Flow.StaveConnector(topStaff, bottomStaff).setType(6);
+
+
+    // topStaff.addTimeSignature("4/4");
+    // bottomStaff.addTimeSignature("4/4");
+    
+    // topStaff.setContext(ctx).draw();
+    // bottomStaff.setContext(ctx).draw();
+    
+    // brace.setContext(ctx).draw();
+    // lineLeft.setContext(ctx).draw();
+    // lineRight.setContext(ctx).draw();
+
+    // var notesTop = [
+    //     new Vex.Flow.StaveNote({ clef: 'treble', keys: ["c/6"], duration: "q" }),
+    //     new Vex.Flow.StaveNote({ clef: 'treble', keys: ["c/5"], duration: "q" }),
+    //     new Vex.Flow.StaveNote({ clef: 'treble', keys: ["c/4"], duration: "q" })
+    // ];
+    // var notesBottom = [
+    //     // new Vex.Flow.GhostNote({ duration: "q" }),
+    //     // new Vex.Flow.StaveNote({ keys: ["b/4"], duration: "qr" }),
+    //     new Vex.Flow.StaveNote({ clef: 'bass', keys: ["c/4"], duration: "q" }),
+    //     new Vex.Flow.StaveNote({ clef: 'bass', keys: ["c/3"], duration: "q" }),
+    //     new Vex.Flow.StaveNote({ clef: 'bass', keys: ["c/2"], duration: "q" })
+    // ];
+
+    // var voiceTop = new Vex.Flow.Voice({
+    //     num_beats: 4,
+    //     beat_value: 4,
+    //     resolution: Vex.Flow.RESOLUTION
+    // });
+
+    // voiceTop.setStrict(false);
+    // voiceTop.addTickables(notesTop);
+
+    // var voiceBottom = new Vex.Flow.Voice({
+    //     num_beats: 4,
+    //     beat_value: 4,
+    //     resolution: Vex.Flow.RESOLUTION
+    // });
+    // voiceBottom.setStrict(false);
+    // voiceBottom.addTickables(notesBottom);
+
+    // // this has no effect ?!
+    // notesTop[0].setStave(bottomStaff);
+
+    // var formatter = new Vex.Flow.Formatter().
+    // joinVoices([voiceBottom, voiceTop])
+    // .format([voiceBottom, voiceTop], 300);
+
+    // voiceBottom.draw(ctx, bottomStaff);
+    // voiceTop.draw(ctx, topStaff);
+
+
+
+    function onMIDISuccess(midiAccess) {
+        
+        var inputs = midiAccess.inputs;
+        var outputs = midiAccess.outputs;
+
+        for (var input of midiAccess.inputs.values()) {
+            input.onmidimessage = getMIDIMessage;
+        }
+    }
+
+    function onMIDIFailure() {
+        document.querySelector('.note-info').textContent = 'Error: Could not access MIDI devices. Connect a device and refresh to try again.';
+    }
+
+    function getMIDIMessage(message) {
+        var command = message.data[0];
+        var note = message.data[1];
+        var velocity = message.data[2];
+
+        switch (command) {
+            case 144: // noteOn
+                document.querySelector('.note-info').textContent = 'Command: ' + command +
+                    ' , Note: ' + note + ' , Velocity: ' + velocity;
+                noteOnListener(note);
+                break;
+        }
+    }
+
+    function noteOnListener(note){
+        console.log("Note:", note);
+        mngr.drawNote(note);
+    }
+
+    
+
+
+    </script>
+</body>
 </html>
